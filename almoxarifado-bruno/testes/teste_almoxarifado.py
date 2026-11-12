@@ -1,4 +1,4 @@
-from produtos.produto import Produto
+from produtos.produtos import Produto
 from produtos.almoxarifado import Almoxarifado
 almox = Almoxarifado("Lages")
 almox.adicionar(Produto("P001", "Luva de vaqueta", 12, 18.50))
