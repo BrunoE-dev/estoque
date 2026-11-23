@@ -36,4 +36,60 @@ class SolicitacaoCompra:
         self.itens.append({"codigo": codigo, "nome": nome, "quantidade": quantidade})
         return None
 
-    
+    # Só o supervisor DESTE pedido aprova, e só se estiver aguardando
+    def aprovar(self, usuario):
+        if not usuario.pode("aprovar_pedido") or usuario.matricula != self.supervisor:
+            return "Só o supervisor desta solicitação pode aprová-la."
+        if self.status != AGUARDANDO:
+            return "Só dá para aprovar o que está aguardando aprovação."
+        if len(self.itens) == 0:
+            return "A solicitação não tem itens."
+        self.status = SOLICITADO
+        self._registrar(usuario.matricula, "Aprovada")
+        return None
+
+    def reprovar(self, usuario):
+        if not usuario.pode("reprovar_pedido") or usuario.matricula != self.supervisor:
+            return "Só o supervisor desta solicitação pode reprová-la."
+        if self.status != AGUARDANDO:
+            return "Só dá para reprovar o que está aguardando reprovação."
+        if len(self.itens) == 0:
+            return "A solicitação não tem itens."
+        self.status = SOLICITADO
+        self._registrar(usuario.matricula, "Reprovada")
+        return None
+
+    def avancar(self, usuario, posicao):
+        if not usuario.pode("andamento_pedido"):
+            return "Só o almoxarifado mexe no andamento da compra."
+        if self.status not in ANDAMENTO or self.status == ENTREGUE:
+            return "Esta solicitação não está em andamento."
+        self.status = ANDAMENTO[posicao + 1]
+
+    def cancelar(self, usuario, motivo):
+        if self.status in ENCERRADOS:
+            return "Esta solicitação já está encrrada."
+        if not usuario.pode("cancelar_pedido"):
+            if usuario.matricula != self.solicitante:
+                return "Só quem abriu ou o almoxarifado pode cancelar."
+
+        if self.status not in [AGUARDANDO, REPROVADO]:
+            return "Depois de aprovada, só o almoxarifado pode cancelar."
+
+        self.status = CANCELADO
+        self._registrar(usuario.matricula, motivo)
+        return None
+
+    def para_dicionario(self):
+        return {
+        "numero": self.numero,
+        "unidade": self.unidade,
+        "solicitante": self.solicitante,
+        "supervisor": self.supervisor,
+        "status": self.status,
+        "itens": self.itens,
+        "historico": self.historico,
+        }
+
+        
+
